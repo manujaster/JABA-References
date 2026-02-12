@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JABA References</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #e8ff47;
+    --accent2: #ff4f47;
+    --text: #f0f0f0;
+    --muted: #666;
+    --card-radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(13,13,13,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .logo span {
+    color: var(--muted);
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 1px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  .search-bar {
+    flex: 1;
+    max-width: 480px;
+    position: relative;
+  }
+
+  .search-bar input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 10px 16px 10px 40px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-bar input::placeholder { color: var(--muted); }
+  .search-bar input:focus { border-color: var(--accent); }
+
+  .search-bar .search-icon {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 16px;
+    pointer-events: none;
+  }
+
+  .header-actions { margin-left: auto; display: flex; gap: 10px; }
+
+  .btn-add {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity 0.15s, transform 0.1s;
+    flex-shrink: 0;
+  }
+  .btn-add:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-add:active { transform: translateY(0); }
+
+  /* ─── CATEGORIES ─── */
+  .categories-bar {
+    padding: 16px 32px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .categories-bar::-webkit-scrollbar { display: none; }
+
+  .cat-pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .cat-pill:hover { border-color: var(--accent); color: var(--accent); }
+  .cat-pill.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    font-weight: 500;
+  }
+
+  .cat-pill .remove-cat {
+    font-size: 11px;
+    opacity: 0.6;
+    margin-left: 2px;
+  }
+  .cat-pill .remove-cat:hover { opacity: 1; }
+
+  .btn-add-category {
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-add-category:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ─── GRID ─── */
+  .main { padding: 28px 32px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    display: none;
+  }
+  .empty-state.visible { display: block; }
+  .empty-state h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .empty-state p { color: var(--muted); font-size: 15px; }
+
+  .grid {
+    columns: 5;
+    column-gap: 16px;
+  }
+
+  @media (max-width: 1400px) { .grid { columns: 4; } }
+  @media (max-width: 1100px) { .grid { columns: 3; } }
+  @media (max-width: 750px)  { .grid { columns: 2; } }
+
+  .card {
+    break-inside: avoid;
+    margin-bottom: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    animation: fadeIn 0.3s ease;
+    position: relative;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    border-color: #3a3a3a;
+  }
+  
+  .card-clickable {
+    cursor: pointer;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-img {
+    width: 100%;
+    display: block;
+    background: var(--surface2);
+    min-height: 120px;
+    object-fit: cover;
+  }
+
+  .card-img-placeholder {
+    width: 100%;
+    min-height: 140px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    color: var(--border);
+  }
+
+  .card-body {
+    padding: 12px 14px 14px;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .card-platform {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .card-cat {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 4px;
+    padding: 2px 7px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+  }
+
+  .tag {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+  }
+
+  .card-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .card:hover .card-actions { opacity: 1; }
+
+  .btn-icon {
+    background: rgba(13,13,13,0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .btn-icon:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+  .btn-icon.delete:hover { background: var(--accent2); border-color: var(--accent2); }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 520px;
+    padding: 28px;
+    transform: translateY(12px);
+    transition: transform 0.25s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 2px;
+    margin-bottom: 24px;
+    color: var(--accent);
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: vertical;
+  }
+  .form-group input::placeholder,
+  .form-group textarea::placeholder { color: var(--muted); }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus { border-color: var(--accent); }
+
+  .form-group select option {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-cancel:hover { border-color: var(--text); color: var(--text); }
+
+  /* ─── STATS BAR ─── */
+  .stats-bar {
+    padding: 12px 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .stat strong { color: var(--accent); font-weight: 400; }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    z-index: 999;
+    transform: translateY(60px);
+    opacity: 0;
+    transition: all 0.3s;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  .no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    display: none;
+  }
+  .no-results.visible { display: block; }
+
+  /* ─── MODAL DETAIL ─── */
+  .modal-detail {
+    max-width: 720px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .detail-image {
+    width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    background: var(--surface2);
+  }
+
+  .detail-header {
+    margin-bottom: 20px;
+  }
+
+  .detail-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 1.5px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .detail-meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .detail-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+
+  .detail-section {
+    margin-bottom: 20px;
+  }
+
+  .detail-section h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .detail-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  .detail-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    transition: opacity 0.15s;
+  }
+  .detail-link:hover { opacity: 0.85; }
+
+  .detail-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn-secondary {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ─── IMAGE UPLOAD ─── */
+  .image-upload-area {
+    position: relative;
+    margin-bottom: 12px;
+  }
+
+  .image-preview {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: 8px;
+    display: none;
+    background: var(--surface2);
+  }
+
+  .image-preview.visible {
+    display: block;
+  }
+
+  .upload-btn-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .btn-upload {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex: 1;
+  }
+  .btn-upload:hover { border-color: var(--accent); color: var(--accent); }
+
+  #fileInput {
+    display: none;
+  }
+
+  .help-text {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-family: 'DM Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">JABA<span>references</span></div>
+  <div class="search-bar">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search by title, tags, platform..." />
+  </div>
+  <div class="header-actions">
+    <button class="btn-add" onclick="openModal()">
+      <span>＋</span> New Reference
+    </button>
+  </div>
+</header>
+
+<!-- CATEGORIES -->
+<div class="categories-bar" id="categoriesBar">
+  <!-- Categories will be rendered dynamically -->
+</div>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <span class="stat">Total: <strong id="totalCount">0</strong></span>
+  <span class="stat">Showing: <strong id="visibleCount">0</strong></span>
+</div>
+
+<!-- MAIN GRID -->
+<div class="main">
+  <div class="empty-state" id="emptyState">
+    <h2>Your board is empty</h2>
+    <p>Add your first visual reference with the <strong>+ New Reference</strong> button</p>
+  </div>
+  <div class="no-results" id="noResults">
+    No results for your search.
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<!-- MODAL ADD/EDIT -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <h2 id="modalTitle">New Reference</h2>
+    <div class="form-group">
+      <label>Title *</label>
+      <input type="text" id="inputTitle" placeholder="E.g., Nike World Cup Reel" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Platform</label>
+        <select id="inputPlatform">
+          <option value="Instagram">Instagram</option>
+          <option value="YouTube">YouTube</option>
+          <option value="X / Twitter">X / Twitter</option>
+          <option value="TikTok">TikTok</option>
+          <option value="Vimeo">Vimeo</option>
+          <option value="Behance">Behance</option>
+          <option value="Web">Web</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select id="inputCategory">
+          <!-- Categories will be populated dynamically -->
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Content URL</label>
+      <input type="url" id="inputUrl" placeholder="https://..." />
+    </div>
+    <div class="form-group">
+      <label>Cover Image</label>
+      <div class="image-upload-area">
+        <img id="imagePreview" class="image-preview" alt="Preview" />
+        <div class="upload-btn-group">
+          <button type="button" class="btn-upload" onclick="document.getElementById('fileInput').click()">📁 Upload Image</button>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)" />
+        <input type="url" id="inputImage" placeholder="Or paste direct image URL (https://...)" style="margin-top:8px" />
+        <div class="help-text">You can upload an image, paste from clipboard (Ctrl/Cmd+V), or paste a URL</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Tags (comma separated)</label>
+      <input type="text" id="inputTags" placeholder="motion, color, loop, vertical..." />
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="inputNotes" rows="2" placeholder="What caught your eye about this reference?"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-add" onclick="saveCard()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETAIL -->
+<div class="modal-overlay" id="detailModal" onclick="closeDetailOutside(event)">
+  <div class="modal modal-detail">
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<!-- MODAL ADD CATEGORY -->
+<div class="modal-overlay" id="categoryModal" onclick="closeCategoryModalOutside(event)">
+  <div class="modal" style="max-width:400px">
+    <h2>Add Category</h2>
+    <div class="form-group">
+      <label>Category Name</label>
+      <input type="text" id="newCategoryInput" placeholder="E.g., VFX, Typography..." maxlength="20" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeCategoryModal()">Cancel</button>
+      <button class="btn-add" onclick="saveNewCategory()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─── STATE ───
+  let refs = JSON.parse(localStorage.getItem('jaba_refs_data') || '[]');
+  let categories = JSON.parse(localStorage.getItem('jaba_categories') || '["Color", "Motion Graphics", "3D", "Creativity"]');
+  let activeCategory = 'All';
+  let searchQuery = '';
+  let editingId = null;
+
+  const PLATFORM_EMOJIS = {
+    'Instagram': '📸',
+    'YouTube': '▶️',
+    'X / Twitter': '🐦',
+    'TikTok': '🎵',
+    'Vimeo': '🎬',
+    'Behance': '🎨',
+    'Web': '🌐',
+    'Other': '🔗'
+  };
+
+  // ─── RENDER CATEGORIES ───
+  function renderCategories() {
+    const bar = document.getElementById('categoriesBar');
+    const select = document.getElementById('inputCategory');
+    
+    // Render category pills
+    let html = `<button class="cat-pill ${activeCategory === 'All' ? 'active' : ''}" data-cat="All" onclick="filterCat(this)">All</button>`;
+    categories.forEach(cat => {
+      html += `
+        <button class="cat-pill ${activeCategory === cat ? 'active' : ''}" data-cat="${cat}" onclick="filterCat(this)">
+          ${cat}
+          <span class="remove-cat" onclick="event.stopPropagation(); removeCategory('${cat}')" title="Remove category">×</span>
+        </button>
+      `;
+    });
+    html += `<button class="btn-add-category" onclick="openCategoryModal()">+ Add Category</button>`;
+    bar.innerHTML = html;
+    
+    // Populate select
+    select.innerHTML = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+  }
+
+  // ─── CATEGORY MANAGEMENT ───
+  function openCategoryModal() {
+    document.getElementById('categoryModal').classList.add('open');
+    document.getElementById('newCategoryInput').value = '';
+    setTimeout(() => document.getElementById('newCategoryInput').focus(), 200);
+  }
+
+  function closeCategoryModal() {
+    document.getElementById('categoryModal').classList.remove('open');
+  }
+
+  function closeCategoryModalOutside(e) {
+    if (e.target === document.getElementById('categoryModal')) closeCategoryModal();
+  }
+
+  function saveNewCategory() {
+    const name = document.getElementById('newCategoryInput').value.trim();
+    if (!name) {
+      showToast('Category name is required');
+      return;
+    }
+    if (categories.includes(name)) {
+      showToast('Category already exists');
+      return;
+    }
+    categories.push(name);
+    saveCategories();
+    renderCategories();
+    closeCategoryModal();
+    showToast('✓ Category added');
+  }
+
+  function removeCategory(cat) {
+    if (!confirm(`Remove "${cat}" category? References with this category will keep it.`)) return;
+    categories = categories.filter(c => c !== cat);
+    if (activeCategory === cat) activeCategory = 'All';
+    saveCategories();
+    renderCategories();
+    render();
+    showToast('Category removed');
+  }
+
+  function saveCategories() {
+    localStorage.setItem('jaba_categories', JSON.stringify(categories));
+  }
+
+  // ─── RENDER GRID ───
+  function render() {
+    const grid = document.getElementById('grid');
+    const emptyState = document.getElementById('emptyState');
+    const noResults = document.getElementById('noResults');
+
+    let filtered = refs.filter(r => {
+      const matchCat = activeCategory === 'All' || r.category === activeCategory;
+      const q = searchQuery.toLowerCase();
+      const matchSearch = !q ||
+        r.title.toLowerCase().includes(q) ||
+        (r.tags || []).some(t => t.toLowerCase().includes(q)) ||
+        r.platform.toLowerCase().includes(q) ||
+        r.category.toLowerCase().includes(q) ||
+        (r.notes || '').toLowerCase().includes(q);
+      return matchCat && matchSearch;
+    });
+
+    document.getElementById('totalCount').textContent = refs.length;
+    document.getElementById('visibleCount').textContent = filtered.length;
+
+    emptyState.classList.toggle('visible', refs.length === 0);
+    noResults.classList.toggle('visible', refs.length > 0 && filtered.length === 0);
+
+    grid.innerHTML = filtered.map(r => cardHTML(r)).join('');
+  }
+
+  function cardHTML(r) {
+    const emoji = PLATFORM_EMOJIS[r.platform] || '🔗';
+    const imgPart = r.image
+      ? `<img class="card-img" src="${r.image}" alt="${r.title}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'card-img-placeholder\\'>${emoji}</div>'">`
+      : `<div class="card-img-placeholder">${emoji}</div>`;
+
+    const tags = (r.tags || []).map(t => `<span class="tag">#${t}</span>`).join('');
+    const notesText = r.notes ? `<div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.4">${r.notes}</div>` : '';
+
+    return `
+      <div class="card card-clickable" id="card-${r.id}" onclick="openDetail('${r.id}')">
+        ${imgPart}
+        <div class="card-actions" onclick="event.stopPropagation()">
+          ${r.url ? `<a class="btn-icon" href="${r.url}" target="_blank" title="Open link" onclick="event.stopPropagation()">↗</a>` : ''}
+          <button class="btn-icon" onclick="event.stopPropagation(); editCard('${r.id}')" title="Edit">✏️</button>
+          <button class="btn-icon delete" onclick="event.stopPropagation(); deleteCard('${r.id}')" title="Delete">✕</button>
+        </div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="card-platform">${emoji} ${r.platform}</span>
+            <span class="card-cat">${r.category}</span>
+          </div>
+          <div class="card-title">${r.title}</div>
+          ${notesText}
+          ${tags ? `<div class="card-tags">${tags}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // ─── FILTERS ───
+  function filterCat(el) {
+    document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    activeCategory = el.dataset.cat;
+    render();
+  }
+
+  // ─── SEARCH ───
+  document.getElementById('searchInput').addEventListener('input', function() {
+    searchQuery = this.value;
+    render();
+  });
+
+  // ─── MODAL ───
+  function openModal(prefillId = null) {
+    editingId = prefillId;
+    const overlay = document.getElementById('modalOverlay');
+    const title = document.getElementById('modalTitle');
+    const preview = document.getElementById('imagePreview');
+
+    renderCategories(); // Update category dropdown
+
+    if (prefillId) {
+      const r = refs.find(x => x.id === prefillId);
+      if (r) {
+        document.getElementById('inputTitle').value = r.title || '';
+        document.getElementById('inputPlatform').value = r.platform || 'Instagram';
+        document.getElementById('inputCategory').value = r.category || categories[0] || 'Color';
+        document.getElementById('inputUrl').value = r.url || '';
+        document.getElementById('inputImage').value = r.image || '';
+        document.getElementById('inputTags').value = (r.tags || []).join(', ');
+        document.getElementById('inputNotes').value = r.notes || '';
+        title.textContent = 'Edit Reference';
+        
+        if (r.image) {
+          preview.src = r.image;
+          preview.classList.add('visible');
+        } else {
+          preview.classList.remove('visible');
+        }
+      }
+    } else {
+      document.getElementById('inputTitle').value = '';
+      document.getElementById('inputPlatform').value = 'Instagram';
+      document.getElementById('inputCategory').value = categories[0] || 'Color';
+      document.getElementById('inputUrl').value = '';
+      document.getElementById('inputImage').value = '';
+      document.getElementById('inputTags').value = '';
+      document.getElementById('inputNotes').value = '';
+      title.textContent = 'New Reference';
+      preview.classList.remove('visible');
+    }
+
+    overlay.classList.add('open');
+    setTimeout(() => document.getElementById('inputTitle').focus(), 200);
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    editingId = null;
+  }
+
+  function closeModalOutside(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  }
+
+  // ─── MODAL DETAIL ───
+  function openDetail(id) {
+    const r = refs.find(x => x.id === id);
+    if (!r) return;
+
+    const emoji = PLATFORM_EMOJIS[r.platform] || '🔗';
+    const tags = (r.tags || []).map(t => `<span class="tag">#${t}</span>`).join('');
+    
+    const imgHTML = r.image 
+      ? `<img class="detail-image" src="${r.image}" alt="${r.title}" onerror="this.style.display='none'">`
+      : '';
+
+    const content = `
+      ${imgHTML}
+      <div class="detail-header">
+        <div class="detail-title">${r.title}</div>
+        <div class="detail-meta">
+          <span class="detail-badge">${emoji} ${r.platform}</span>
+          <span class="detail-badge">${r.category}</span>
+        </div>
+      </div>
+      
+      ${r.notes ? `
+        <div class="detail-section">
+          <h3>Notes</h3>
+          <div class="detail-text">${r.notes}</div>
+        </div>
+      ` : ''}
+      
+      ${tags ? `
+        <div class="detail-section">
+          <h3>Tags</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${tags}</div>
+        </div>
+      ` : ''}
+      
+      ${r.url ? `
+        <div class="detail-section">
+          <a href="${r.url}" target="_blank" class="detail-link">
+            ↗ View Original Content
+          </a>
+        </div>
+      ` : ''}
+      
+      <div class="detail-actions">
+        <button class="btn-secondary" onclick="closeDetail(); editCard('${r.id}')">✏️ Edit</button>
+        <button class="btn-secondary" onclick="if(confirm('Delete this reference?')) { deleteCard('${r.id}'); closeDetail(); }">🗑️ Delete</button>
+        <button class="btn-cancel" onclick="closeDetail()" style="margin-left:auto">Close</button>
+      </div>
+    `;
+
+    document.getElementById('detailContent').innerHTML = content;
+    document.getElementById('detailModal').classList.add('open');
+  }
+
+  function closeDetail() {
+    document.getElementById('detailModal').classList.remove('open');
+  }
+
+  function closeDetailOutside(e) {
+    if (e.target === document.getElementById('detailModal')) closeDetail();
+  }
+
+  // ─── IMAGE HANDLING ───
+  function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const base64 = e.target.result;
+      document.getElementById('inputImage').value = base64;
+      const preview = document.getElementById('imagePreview');
+      preview.src = base64;
+      preview.classList.add('visible');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Listener for Ctrl+V / Cmd+V when modal is open
+  document.addEventListener('paste', function(e) {
+    if (!document.getElementById('modalOverlay').classList.contains('open')) return;
+    
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        e.preventDefault();
+        const blob = items[i].getAsFile();
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const base64 = event.target.result;
+          document.getElementById('inputImage').value = base64;
+          const preview = document.getElementById('imagePreview');
+          preview.src = base64;
+          preview.classList.add('visible');
+          showToast('✓ Image pasted');
+        };
+        reader.readAsDataURL(blob);
+        break;
+      }
+    }
+  });
+
+  // Auto-update preview when URL is pasted
+  document.getElementById('inputImage').addEventListener('input', function() {
+    const url = this.value.trim();
+    const preview = document.getElementById('imagePreview');
+    if (url && (url.startsWith('http') || url.startsWith('data:'))) {
+      preview.src = url;
+      preview.classList.add('visible');
+    } else {
+      preview.classList.remove('visible');
+    }
+  });
+
+  // ESC to close
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeModal();
+      closeDetail();
+      closeCategoryModal();
+    }
+  });
+
+  // ─── SAVE ───
+  function saveCard() {
+    const title = document.getElementById('inputTitle').value.trim();
+    if (!title) { showToast('Title is required'); return; }
+
+    const tagsRaw = document.getElementById('inputTags').value;
+    const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+
+    if (editingId) {
+      const idx = refs.findIndex(r => r.id === editingId);
+      if (idx !== -1) {
+        refs[idx] = {
+          ...refs[idx],
+          title,
+          platform: document.getElementById('inputPlatform').value,
+          category: document.getElementById('inputCategory').value,
+          url: document.getElementById('inputUrl').value.trim(),
+          image: document.getElementById('inputImage').value.trim(),
+          tags,
+          notes: document.getElementById('inputNotes').value.trim(),
+        };
+      }
+      showToast('✓ Reference updated');
+    } else {
+      refs.unshift({
+        id: Date.now().toString(),
+        title,
+        platform: document.getElementById('inputPlatform').value,
+        category: document.getElementById('inputCategory').value,
+        url: document.getElementById('inputUrl').value.trim(),
+        image: document.getElementById('inputImage').value.trim(),
+        tags,
+        notes: document.getElementById('inputNotes').value.trim(),
+        createdAt: new Date().toISOString(),
+      });
+      showToast('✓ Reference saved');
+    }
+
+    save();
+    closeModal();
+    render();
+  }
+
+  function editCard(id) {
+    openModal(id);
+  }
+
+  function deleteCard(id) {
+    if (!confirm('Delete this reference?')) return;
+    refs = refs.filter(r => r.id !== id);
+    save();
+    render();
+    showToast('Reference deleted');
+  }
+
+  // ─── PERSIST ───
+  function save() {
+    localStorage.setItem('jaba_refs_data', JSON.stringify(refs));
+  }
+
+  // ─── TOAST ───
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ─── INIT ───
+  renderCategories();
+  render();
+</script>
+</body>
+</html>
