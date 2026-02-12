@@ -92,7 +92,25 @@
     pointer-events: none;
   }
 
-  .header-actions { margin-left: auto; display: flex; gap: 10px; }
+  .header-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+
+  .sync-indicator {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .sync-indicator.synced { color: var(--accent); }
+  .sync-indicator .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+  .sync-indicator.synced .dot { background: var(--accent); }
 
   .btn-add {
     background: var(--accent);
@@ -627,9 +645,49 @@
     margin-top: 6px;
     font-family: 'DM Mono', monospace;
   }
+
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .loading-overlay.hidden { display: none; }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
 </style>
 </head>
 <body>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Connecting to Firebase...</div>
+</div>
 
 <!-- HEADER -->
 <header>
@@ -639,6 +697,10 @@
     <input type="text" id="searchInput" placeholder="Search by title, tags, platform..." />
   </div>
   <div class="header-actions">
+    <div class="sync-indicator" id="syncIndicator">
+      <span class="dot"></span>
+      <span>Connecting...</span>
+    </div>
     <button class="btn-add" onclick="openModal()">
       <span>＋</span> New Reference
     </button>
@@ -753,13 +815,32 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<script>
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+  import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+  // Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyC6hfRi-3lgYYycdR_l3gTr3CDWA5L8kc4",
+    authDomain: "jaba-references.firebaseapp.com",
+    projectId: "jaba-references",
+    storageBucket: "jaba-references.firebasestorage.app",
+    messagingSenderId: "518982294467",
+    appId: "1:518982294467:web:2e74320d15c27dd2783b76"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
   // ─── STATE ───
-  let refs = JSON.parse(localStorage.getItem('jaba_refs_data') || '[]');
-  let categories = JSON.parse(localStorage.getItem('jaba_categories') || '["Color", "Motion Graphics", "3D", "Creativity"]');
+  window.refs = [];
+  window.categories = ["Color", "Motion Graphics", "3D", "Creativity"];
   let activeCategory = 'All';
   let searchQuery = '';
   let editingId = null;
+  let isSynced = false;
 
   const PLATFORM_EMOJIS = {
     'Instagram': '📸',
@@ -772,6 +853,58 @@
     'Other': '🔗'
   };
 
+  // ─── FIREBASE LISTENERS ───
+  
+  // Listen to references
+  const refsCollection = collection(db, 'references');
+  onSnapshot(refsCollection, (snapshot) => {
+    window.refs = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    render();
+    updateSyncIndicator(true);
+    hideLoading();
+  }, (error) => {
+    console.error('Error listening to references:', error);
+    showToast('Connection error. Check console.');
+    updateSyncIndicator(false);
+    hideLoading();
+  });
+
+  // Listen to categories
+  const categoriesCollection = collection(db, 'categories');
+  onSnapshot(categoriesCollection, (snapshot) => {
+    if (snapshot.docs.length > 0) {
+      window.categories = snapshot.docs.map(doc => doc.data().name);
+    } else {
+      // Initialize default categories if none exist
+      const defaultCategories = ["Color", "Motion Graphics", "3D", "Creativity"];
+      defaultCategories.forEach(cat => {
+        addDoc(categoriesCollection, { name: cat, createdAt: serverTimestamp() });
+      });
+    }
+    renderCategories();
+  }, (error) => {
+    console.error('Error listening to categories:', error);
+  });
+
+  function updateSyncIndicator(synced) {
+    isSynced = synced;
+    const indicator = document.getElementById('syncIndicator');
+    if (synced) {
+      indicator.classList.add('synced');
+      indicator.querySelector('span:last-child').textContent = 'Synced';
+    } else {
+      indicator.classList.remove('synced');
+      indicator.querySelector('span:last-child').textContent = 'Offline';
+    }
+  }
+
+  function hideLoading() {
+    document.getElementById('loadingOverlay').classList.add('hidden');
+  }
+
   // ─── RENDER CATEGORIES ───
   function renderCategories() {
     const bar = document.getElementById('categoriesBar');
@@ -779,7 +912,7 @@
     
     // Render category pills
     let html = `<button class="cat-pill ${activeCategory === 'All' ? 'active' : ''}" data-cat="All" onclick="filterCat(this)">All</button>`;
-    categories.forEach(cat => {
+    window.categories.forEach(cat => {
       html += `
         <button class="cat-pill ${activeCategory === cat ? 'active' : ''}" data-cat="${cat}" onclick="filterCat(this)">
           ${cat}
@@ -791,53 +924,63 @@
     bar.innerHTML = html;
     
     // Populate select
-    select.innerHTML = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+    select.innerHTML = window.categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
   }
 
   // ─── CATEGORY MANAGEMENT ───
-  function openCategoryModal() {
+  window.openCategoryModal = function() {
     document.getElementById('categoryModal').classList.add('open');
     document.getElementById('newCategoryInput').value = '';
     setTimeout(() => document.getElementById('newCategoryInput').focus(), 200);
   }
 
-  function closeCategoryModal() {
+  window.closeCategoryModal = function() {
     document.getElementById('categoryModal').classList.remove('open');
   }
 
-  function closeCategoryModalOutside(e) {
+  window.closeCategoryModalOutside = function(e) {
     if (e.target === document.getElementById('categoryModal')) closeCategoryModal();
   }
 
-  function saveNewCategory() {
+  window.saveNewCategory = async function() {
     const name = document.getElementById('newCategoryInput').value.trim();
     if (!name) {
       showToast('Category name is required');
       return;
     }
-    if (categories.includes(name)) {
+    if (window.categories.includes(name)) {
       showToast('Category already exists');
       return;
     }
-    categories.push(name);
-    saveCategories();
-    renderCategories();
-    closeCategoryModal();
-    showToast('✓ Category added');
+    
+    try {
+      await addDoc(categoriesCollection, { 
+        name: name,
+        createdAt: serverTimestamp()
+      });
+      closeCategoryModal();
+      showToast('✓ Category added');
+    } catch (error) {
+      console.error('Error adding category:', error);
+      showToast('Error adding category');
+    }
   }
 
-  function removeCategory(cat) {
+  window.removeCategory = async function(cat) {
     if (!confirm(`Remove "${cat}" category? References with this category will keep it.`)) return;
-    categories = categories.filter(c => c !== cat);
-    if (activeCategory === cat) activeCategory = 'All';
-    saveCategories();
-    renderCategories();
-    render();
-    showToast('Category removed');
-  }
-
-  function saveCategories() {
-    localStorage.setItem('jaba_categories', JSON.stringify(categories));
+    
+    try {
+      const snapshot = await getDocs(query(categoriesCollection, where('name', '==', cat)));
+      snapshot.forEach(async (document) => {
+        await deleteDoc(doc(db, 'categories', document.id));
+      });
+      
+      if (activeCategory === cat) activeCategory = 'All';
+      showToast('Category removed');
+    } catch (error) {
+      console.error('Error removing category:', error);
+      showToast('Error removing category');
+    }
   }
 
   // ─── RENDER GRID ───
@@ -846,7 +989,7 @@
     const emptyState = document.getElementById('emptyState');
     const noResults = document.getElementById('noResults');
 
-    let filtered = refs.filter(r => {
+    let filtered = window.refs.filter(r => {
       const matchCat = activeCategory === 'All' || r.category === activeCategory;
       const q = searchQuery.toLowerCase();
       const matchSearch = !q ||
@@ -858,11 +1001,11 @@
       return matchCat && matchSearch;
     });
 
-    document.getElementById('totalCount').textContent = refs.length;
+    document.getElementById('totalCount').textContent = window.refs.length;
     document.getElementById('visibleCount').textContent = filtered.length;
 
-    emptyState.classList.toggle('visible', refs.length === 0);
-    noResults.classList.toggle('visible', refs.length > 0 && filtered.length === 0);
+    emptyState.classList.toggle('visible', window.refs.length === 0);
+    noResults.classList.toggle('visible', window.refs.length > 0 && filtered.length === 0);
 
     grid.innerHTML = filtered.map(r => cardHTML(r)).join('');
   }
@@ -898,7 +1041,7 @@
   }
 
   // ─── FILTERS ───
-  function filterCat(el) {
+  window.filterCat = function(el) {
     document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
     el.classList.add('active');
     activeCategory = el.dataset.cat;
@@ -912,7 +1055,7 @@
   });
 
   // ─── MODAL ───
-  function openModal(prefillId = null) {
+  window.openModal = function(prefillId = null) {
     editingId = prefillId;
     const overlay = document.getElementById('modalOverlay');
     const title = document.getElementById('modalTitle');
@@ -921,11 +1064,11 @@
     renderCategories(); // Update category dropdown
 
     if (prefillId) {
-      const r = refs.find(x => x.id === prefillId);
+      const r = window.refs.find(x => x.id === prefillId);
       if (r) {
         document.getElementById('inputTitle').value = r.title || '';
         document.getElementById('inputPlatform').value = r.platform || 'Instagram';
-        document.getElementById('inputCategory').value = r.category || categories[0] || 'Color';
+        document.getElementById('inputCategory').value = r.category || window.categories[0] || 'Color';
         document.getElementById('inputUrl').value = r.url || '';
         document.getElementById('inputImage').value = r.image || '';
         document.getElementById('inputTags').value = (r.tags || []).join(', ');
@@ -942,7 +1085,7 @@
     } else {
       document.getElementById('inputTitle').value = '';
       document.getElementById('inputPlatform').value = 'Instagram';
-      document.getElementById('inputCategory').value = categories[0] || 'Color';
+      document.getElementById('inputCategory').value = window.categories[0] || 'Color';
       document.getElementById('inputUrl').value = '';
       document.getElementById('inputImage').value = '';
       document.getElementById('inputTags').value = '';
@@ -955,18 +1098,18 @@
     setTimeout(() => document.getElementById('inputTitle').focus(), 200);
   }
 
-  function closeModal() {
+  window.closeModal = function() {
     document.getElementById('modalOverlay').classList.remove('open');
     editingId = null;
   }
 
-  function closeModalOutside(e) {
+  window.closeModalOutside = function(e) {
     if (e.target === document.getElementById('modalOverlay')) closeModal();
   }
 
   // ─── MODAL DETAIL ───
-  function openDetail(id) {
-    const r = refs.find(x => x.id === id);
+  window.openDetail = function(id) {
+    const r = window.refs.find(x => x.id === id);
     if (!r) return;
 
     const emoji = PLATFORM_EMOJIS[r.platform] || '🔗';
@@ -1019,16 +1162,16 @@
     document.getElementById('detailModal').classList.add('open');
   }
 
-  function closeDetail() {
+  window.closeDetail = function() {
     document.getElementById('detailModal').classList.remove('open');
   }
 
-  function closeDetailOutside(e) {
+  window.closeDetailOutside = function(e) {
     if (e.target === document.getElementById('detailModal')) closeDetail();
   }
 
   // ─── IMAGE HANDLING ───
-  function handleFileSelect(event) {
+  window.handleFileSelect = function(event) {
     const file = event.target.files[0];
     if (!file) return;
     
@@ -1091,63 +1234,54 @@
   });
 
   // ─── SAVE ───
-  function saveCard() {
+  window.saveCard = async function() {
     const title = document.getElementById('inputTitle').value.trim();
     if (!title) { showToast('Title is required'); return; }
 
     const tagsRaw = document.getElementById('inputTags').value;
     const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
 
-    if (editingId) {
-      const idx = refs.findIndex(r => r.id === editingId);
-      if (idx !== -1) {
-        refs[idx] = {
-          ...refs[idx],
-          title,
-          platform: document.getElementById('inputPlatform').value,
-          category: document.getElementById('inputCategory').value,
-          url: document.getElementById('inputUrl').value.trim(),
-          image: document.getElementById('inputImage').value.trim(),
-          tags,
-          notes: document.getElementById('inputNotes').value.trim(),
-        };
-      }
-      showToast('✓ Reference updated');
-    } else {
-      refs.unshift({
-        id: Date.now().toString(),
-        title,
-        platform: document.getElementById('inputPlatform').value,
-        category: document.getElementById('inputCategory').value,
-        url: document.getElementById('inputUrl').value.trim(),
-        image: document.getElementById('inputImage').value.trim(),
-        tags,
-        notes: document.getElementById('inputNotes').value.trim(),
-        createdAt: new Date().toISOString(),
-      });
-      showToast('✓ Reference saved');
-    }
+    const refData = {
+      title,
+      platform: document.getElementById('inputPlatform').value,
+      category: document.getElementById('inputCategory').value,
+      url: document.getElementById('inputUrl').value.trim(),
+      image: document.getElementById('inputImage').value.trim(),
+      tags,
+      notes: document.getElementById('inputNotes').value.trim(),
+      updatedAt: serverTimestamp()
+    };
 
-    save();
-    closeModal();
-    render();
+    try {
+      if (editingId) {
+        await updateDoc(doc(db, 'references', editingId), refData);
+        showToast('✓ Reference updated');
+      } else {
+        refData.createdAt = serverTimestamp();
+        await addDoc(refsCollection, refData);
+        showToast('✓ Reference saved');
+      }
+      closeModal();
+    } catch (error) {
+      console.error('Error saving reference:', error);
+      showToast('Error saving reference');
+    }
   }
 
-  function editCard(id) {
+  window.editCard = function(id) {
     openModal(id);
   }
 
-  function deleteCard(id) {
+  window.deleteCard = async function(id) {
     if (!confirm('Delete this reference?')) return;
-    refs = refs.filter(r => r.id !== id);
-    save();
-    render();
-    showToast('Reference deleted');
-  }
-
-  // ─── PERSIST ───
-  function save() {
-    localStorage.setItem('jaba_refs_data', JSON.stringify(refs));
+    
+    try {
+      await deleteDoc(doc(db, 'references', id));
+      showToast('Reference deleted');
+    } catch (error) {
+      console.error('Error deleting reference:', error);
+      showToast('Error deleting reference');
+    }
   }
 
   // ─── TOAST ───
@@ -1157,6 +1291,9 @@
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2500);
   }
+
+  // Make showToast globally accessible
+  window.showToast = showToast;
 
   // ─── INIT ───
   renderCategories();
